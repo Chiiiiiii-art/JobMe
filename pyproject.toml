@@ -1,0 +1,35 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "jobme"
+version = "0.1.0"
+description = "Automated Taiwanese job scraping and TypeSafe Jev decision pipeline"
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "MIT" }
+authors = [
+    { name = "JobMe Contributors" }
+]
+dependencies = [
+    "requests>=2.28.0",
+    "pyyaml>=6.0",
+    "beautifulsoup4>=4.12.0",
+    "playwright>=1.40.0",
+    "python-dotenv>=1.0.0",
+    "deep-translator>=1.11.4",
+    "fastapi>=0.110.0",
+    "uvicorn>=0.28.0",
+    "discord.py>=2.3.0",
+]
+
+[project.scripts]
+jobme = "jobme.__main__:main"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["jobme*"]
+
+[tool.setuptools.package-data]
+jobme = ["data/*.json"]

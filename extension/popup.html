@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>JobMe AI 評測</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <div class="app-container">
+    <!-- Header -->
+    <header class="app-header">
+      <div class="brand">
+        <div class="logo-icon">⚡</div>
+        <span class="logo-text">JobMe <span class="badge-ai">AI</span></span>
+      </div>
+      <div id="conn-status" class="status-badge status-checking">
+        <span class="status-dot"></span>
+        <span id="conn-text">連線中...</span>
+      </div>
+    </header>
+
+    <!-- Job Header Card -->
+    <section id="job-card" class="job-card hidden">
+      <div class="job-card-meta">
+        <span id="platform-badge" class="platform-badge">104</span>
+        <span id="company-name" class="company-name">企業名稱</span>
+      </div>
+      <h2 id="job-title" class="job-title">職缺職稱載入中...</h2>
+    </section>
+
+    <!-- Main Content Area -->
+    <main class="content-body">
+      <!-- State 1: Checking Cache Loading -->
+      <div id="state-checking" class="state-panel">
+        <div class="spinner"></div>
+        <p class="state-hint">正在查詢歷史評估紀錄...</p>
+      </div>
+
+      <!-- State 2: Evaluated Result -->
+      <div id="state-evaluated" class="state-panel hidden">
+        <div class="score-banner">
+          <div class="score-circle-wrapper">
+            <div id="score-circle" class="score-circle">
+              <span id="score-val" class="score-val">0.0</span>
+              <span class="score-unit">分</span>
+            </div>
+          </div>
+          <div class="score-meta">
+            <div id="eval-verdict" class="verdict-tag verdict-pass">達標推薦</div>
+            <div class="tags-row">
+              <span id="tier-tag" class="tag tag-tier">Tier 1</span>
+              <span id="fit-tag" class="tag tag-fit">契合度 HIGH</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="breakdown-container">
+          <div class="breakdown-header">
+            <span>評分維度明細</span>
+            <span id="breakdown-summary"></span>
+          </div>
+          <div id="dimensions-list" class="dimensions-list">
+            <!-- Injected by popup.js -->
+          </div>
+        </div>
+
+        <div class="action-footer">
+          <button id="btn-re-evaluate" class="btn btn-secondary">重新評分</button>
+        </div>
+      </div>
+
+      <!-- State 3: Stage 1 Rejected -->
+      <div id="state-rejected" class="state-panel hidden">
+        <div class="notice-card notice-danger">
+          <div class="notice-icon">🛑</div>
+          <div class="notice-content">
+            <h3>履歷適配度未達標</h3>
+            <p id="rejected-msg">此職缺方向與履歷設定不吻合 (Stage 1)，已自動排除以節省 API 成本。</p>
+          </div>
+        </div>
+        <div class="action-footer">
+          <button id="btn-force-evaluate" class="btn btn-primary">強制進行 Stage 2 完整評估</button>
+        </div>
+      </div>
+
+      <!-- State 4: Not Evaluated -->
+      <div id="state-not-evaluated" class="state-panel hidden">
+        <div class="notice-card notice-info">
+          <div class="notice-icon">💡</div>
+          <div class="notice-content">
+            <h3>此職缺尚未評估</h3>
+            <p>點擊下方按鈕，Jev 決策引擎將即時執行雙階段漏斗評估並錨定企業背景。</p>
+          </div>
+        </div>
+        <button id="btn-evaluate" class="btn btn-primary btn-cta">
+          <span class="cta-icon">⚡</span> 立即使用 Jev AI 評測
+        </button>
+      </div>
+
+      <!-- State 5: Evaluating in Progress -->
+      <div id="state-evaluating" class="state-panel hidden">
+        <div class="pulsing-loader">
+          <div class="pulse-ring"></div>
+          <div class="pulse-core">Jev</div>
+        </div>
+        <h3 class="eval-title">AI 決策評估中</h3>
+        <p id="eval-status-text" class="eval-status-text">正在分析職缺內容與履歷吻合度...</p>
+        <div class="eval-progress-bar">
+          <div class="progress-fill"></div>
+        </div>
+        <p class="eval-subtext">評測完成將同步推播至 Discord，視窗關閉亦會在背景完成。</p>
+      </div>
+
+      <!-- State 6: Not a Job Description Page (Notice) -->
+      <div id="state-not-jd" class="state-panel hidden">
+        <div class="notice-card notice-warning">
+          <div class="notice-icon">📄🚫</div>
+          <div class="notice-content">
+            <h3>非職缺詳情頁面</h3>
+            <p id="not-jd-msg">目前瀏覽的頁面不是支援平台之單一職缺詳情頁，無法進行 AI 評測。</p>
+          </div>
+        </div>
+        <div class="supported-box">
+          <p class="supported-title">請於下列平台的單一職缺頁面開啟外掛：</p>
+          <ul class="supported-list">
+            <li><strong>104 人力銀行</strong>：<code>https://www.104.com.tw/job/xxxxx</code></li>
+            <li><strong>Cake (CakeResume)</strong>：<code>/companies/.../jobs/xxxxx</code></li>
+            <li><strong>Yourator</strong>：<code>/companies/.../jobs/12345</code></li>
+            <li><strong>1111 人力銀行</strong>：<code>https://www.1111.com.tw/job/xxxxx</code></li>
+            <li><strong>yes123</strong>：<code>https://www.yes123.com.tw/...job_id=xxxxx</code></li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- State 7: Server Error / Connection issue -->
+      <div id="state-error" class="state-panel hidden">
+        <div class="notice-card notice-warning">
+          <div class="notice-icon">⚠️</div>
+          <div class="notice-content">
+            <h3 id="error-title">無法取得職缺內容</h3>
+            <p id="error-msg">請確認目前分頁為 104、Cake、Yourator、1111 或 yes123 職缺詳情頁面。</p>
+          </div>
+        </div>
+        <div id="server-offline-help" class="server-help hidden">
+          <p class="help-title">本機 API 尚未啟動？</p>
+          <code class="code-block">python -m jobme --serve</code>
+        </div>
+        <button id="btn-retry" class="btn btn-secondary">重試檢查</button>
+      </div>
+    </main>
+
+    <!-- App Footer -->
+    <footer class="app-footer">
+      <div class="footer-left">
+        <span class="dc-icon">💬</span>
+        <span class="dc-text">達標自動推播至 Discord</span>
+      </div>
+      <button id="btn-settings-toggle" class="btn-icon" title="伺服器設定">⚙️</button>
+    </footer>
+
+    <!-- Settings Overlay -->
+    <div id="settings-overlay" class="settings-overlay hidden">
+      <div class="settings-card">
+        <div class="settings-header">
+          <h3>伺服器連線設定</h3>
+          <button id="btn-settings-close" class="btn-close">×</button>
+        </div>
+        <div class="form-group">
+          <label for="input-api-url">API 網址 (預設 127.0.0.1:8000)</label>
+          <input type="text" id="input-api-url" class="form-input" value="http://127.0.0.1:8000">
+        </div>
+        <div class="settings-actions">
+          <button id="btn-save-settings" class="btn btn-primary">儲存設定</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html>

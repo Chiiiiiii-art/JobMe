@@ -1,0 +1,42 @@
+{
+  "manifest_version": 3,
+  "name": "JobMe - 智慧求職 Jev 決策評測",
+  "version": "1.0.0",
+  "description": "瀏覽 104、Cake、Yourator 等平台時，一鍵執行 Jev AI 雙階段履歷契合度與維度深度評估，並即時同步 Discord。",
+  "permissions": [
+    "activeTab",
+    "scripting",
+    "storage"
+  ],
+  "host_permissions": [
+    "http://127.0.0.1:8000/*",
+    "http://localhost:8000/*"
+  ],
+  "action": {
+    "default_popup": "popup.html",
+    "default_icon": {
+      "16": "icons/icon16.png",
+      "48": "icons/icon48.png",
+      "128": "icons/icon128.png"
+    }
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "*://*.104.com.tw/*",
+        "*://*.cake.me/*",
+        "*://*.cakeresume.com/*",
+        "*://*.yourator.co/*",
+        "*://*.1111.com.tw/*",
+        "*://*.yes123.com.tw/*"
+      ],
+      "js": ["content.js"],
+      "run_at": "document_idle"
+    }
+  ],
+  "icons": {
+    "16": "icons/icon16.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  }
+}
